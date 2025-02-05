@@ -20,8 +20,9 @@ jobs:
 
     - name: Build Docker Image
       run: |
-        docker build -t hello-world-app:latest .
-        docker images
+           cd /home/ubuntu/test-project
+           docker build -t hello-world-app:latest .
+           docker images
 
     - name: Run Security Scan on Docker Image with Trivy
       run: |
