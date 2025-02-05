@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -12,24 +13,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Copy code to VM
-      run: |
-        scp -i ${{ secrets.VM_SSH_KEY }} -r ./ ubuntu@${{ secrets.VM_IP }}:/home/ubuntu/app
+    - name: Save SSH Key to a File
+      run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key.pem
+      shell: bash
 
-    - name: SSH into VM, Build Docker Image and Deploy to Minikube
+    - name: Set Permissions for the Private Key
+      run: chmod 600 /tmp/private_key.pem
+      shell: bash
+
+    - name: SSH into VM, Pull Latest Code, Build Docker Image, and Deploy to Kubernetes
       run: |
-        ssh -i ${{ secrets.VM_SSH_KEY }} ubuntu@${{ secrets.VM_IP }} << 'EOF'
-          # Navigate to the app directory on the VM
+        ssh -i /tmp/private_key.pem ubuntu@<your-vm-ip> << 'EOF'
+          # Go to the project directory
           cd /home/ubuntu/app
-          
-          # Ensure Docker is using Minikube's Docker daemon
-          eval $(minikube -p minikube docker-env)
-          
-          # Build the Docker image on the VM
+
+          # Pull the latest code from the repository
+          git pull origin main
+
+          # Build the Docker image locally on the VM
           docker build -t hello-world-app:latest .
-          
-          # Deploy the Docker image to Minikube Kubernetes
+
+          # Deploy the image to Kubernetes
           kubectl set image deployment/hello-world-app hello-world=hello-world-app:latest
+
+          # Wait for the Kubernetes deployment to be updated
           kubectl rollout status deployment/hello-world-app
         EOF
-
+      shell: bash
