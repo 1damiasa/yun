@@ -30,7 +30,7 @@ jobs:
           # Copy the latest code to the Kubernetes container running the app
           # Replace 'hello-world-app' with the actual name of your pod/container
           kubectl cp /home/ubuntu/test-project/python.py hello-world-app:/app/python.py
-          
+
           # If there are multiple files to copy, use the following (example)
           # kubectl cp /home/ubuntu/test-project/. hello-world-app:/app/
 
@@ -39,5 +39,20 @@ jobs:
         EOF
       env:
         VM_IP: ${{ secrets.VM_IP }}
+
+    - name: Run Security Scan on Docker Image with Trivy
+      run: |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL hello-world-app:latest
+
+    - name: Rollback Deployment if Security Scan Fails
+      run: |
+        if [[ $? -eq 1 ]]; then
+          echo "Security scan failed. Rolling back the deployment."
+          ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
+            kubectl rollout undo deployment/hello-world-app
+          EOF
+        else
+          echo "Security scan passed, proceeding with deployment."
+        fi
 
 
