@@ -1,6 +1,7 @@
 Deployment Setup for Python Flask App with Docker, Minikube, Kubernetes, and Terraform
 This guide describes the steps to set up a Python Flask app with Docker, Minikube, Kubernetes, and Terraform on an EC2 instance. It also includes the setup for a CI/CD pipeline using GitHub Actions.
 
+
 Steps to Setup the Environment
 1. Launch EC2 Instance
 Launch an EC2 instance on AWS (Ubuntu 20.04 recommended).
