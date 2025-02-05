@@ -23,7 +23,7 @@ jobs:
 
     - name: SSH into VM, Pull Latest Code, Build Docker Image, and Deploy to Kubernetes
       run: |
-        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@<your-vm-ip> \
+        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@3.144.232.45 \
         "cd /home/ubuntu/app && \
          git pull origin main && \
          docker build -t hello-world-app:latest . && \
