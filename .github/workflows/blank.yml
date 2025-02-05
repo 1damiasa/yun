@@ -23,7 +23,7 @@ jobs:
 
     - name: SSH into VM, Pull Latest Code, Build Docker Image, and Deploy to Kubernetes
       run: |
-        ssh -i /tmp/private_key.pem ubuntu@<your-vm-ip> << 'EOF'
+        ssh -i /tmp/private_key.pem ubuntu@3.144.232.45 << 'EOF'
           # Go to the project directory
           cd /home/ubuntu/app
 
