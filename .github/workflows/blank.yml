@@ -22,20 +22,18 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
           # Go to the project directory
+          
           cd /home/ubuntu/test-project
+           # Pull the latest code from the repository
+          git pull origin main
           
           # Build and tag the Docker image
           docker build -t hello-world-app:latest .
           
           # Run the security scan with Trivy
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL hello-world-app:latest
-
-          # Pull the latest code from the repository
-          git pull origin main
-
-          # Copy the latest code to the Kubernetes container running the app
-          kubectl cp /home/ubuntu/test-project/python.py hello-world-app:/app/python.py
-
+          # deployment
+          kubectl apply -f deployment.yml
           # Trigger a rollout to apply the changes
           kubectl rollout restart deployment/hello-world-app
         EOF
