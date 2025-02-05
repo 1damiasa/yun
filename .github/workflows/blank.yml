@@ -23,20 +23,11 @@ jobs:
 
     - name: SSH into VM, Pull Latest Code, Build Docker Image, and Deploy to Kubernetes
       run: |
-        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@<your-vm-ip> << 'EOF'
-          # Go to the project directory
-          cd /home/ubuntu/app
-
-          # Pull the latest code from the repository
-          git pull origin main
-
-          # Build the Docker image locally on the VM
-          docker build -t hello-world-app:latest .
-
-          # Deploy the image to Kubernetes
-          kubectl set image deployment/hello-world-app hello-world=hello-world-app:latest
-
-          # Wait for the Kubernetes deployment to be updated
-          kubectl rollout status deployment/hello-world-app
-        EOF
+        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@<your-vm-ip> \
+        "cd /home/ubuntu/app && \
+         git pull origin main && \
+         docker build -t hello-world-app:latest . && \
+         kubectl set image deployment/hello-world-app hello-world=hello-world-app:latest && \
+         kubectl rollout status deployment/hello-world-app"
       shell: bash
+
