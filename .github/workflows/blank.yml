@@ -18,6 +18,16 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key.pem
         chmod 600 /tmp/private_key.pem
 
+    - name: Build Docker Image
+      run: |
+        docker build -t hello-world-app:latest .
+        docker images
+
+    - name: Run Security Scan on Docker Image with Trivy
+      run: |
+        # Run Trivy security scan on the locally built image
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL hello-world-app:latest
+
     - name: SSH into VM, Pull latest code, and copy to container
       run: |
         ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
@@ -40,10 +50,6 @@ jobs:
       env:
         VM_IP: ${{ secrets.VM_IP }}
 
-    - name: Run Security Scan on Docker Image with Trivy
-      run: |
-        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL hello-world-app:latest
-
     - name: Rollback Deployment if Security Scan Fails
       run: |
         if [[ $? -eq 1 ]]; then
@@ -54,5 +60,6 @@ jobs:
         else
           echo "Security scan passed, proceeding with deployment."
         fi
+
 
 
