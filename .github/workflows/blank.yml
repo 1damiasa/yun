@@ -18,25 +18,23 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key.pem
         chmod 600 /tmp/private_key.pem
         
-
     - name: SSH into VM, Pull latest code, and copy to container
       run: |
         ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
           # Go to the project directory
           cd /home/ubuntu/test-project
+          
+          # Build and tag the Docker image
           docker build -t hello-world-app:latest .
-          docker images
+          
+          # Run the security scan with Trivy
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL hello-world-app:latest
 
           # Pull the latest code from the repository
           git pull origin main
 
           # Copy the latest code to the Kubernetes container running the app
-          # Replace 'hello-world-app' with the actual name of your pod/container
           kubectl cp /home/ubuntu/test-project/python.py hello-world-app:/app/python.py
-
-          # If there are multiple files to copy, use the following (example)
-          # kubectl cp /home/ubuntu/test-project/. hello-world-app:/app/
 
           # Trigger a rollout to apply the changes
           kubectl rollout restart deployment/hello-world-app
@@ -54,6 +52,4 @@ jobs:
         else
           echo "Security scan passed, proceeding with deployment."
         fi
-
-
 
