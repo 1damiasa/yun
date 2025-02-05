@@ -30,7 +30,10 @@ jobs:
           # Go to the project directory
           cd /home/ubuntu/test-project
           docker build -t sayyamdev/test-project:latest .
+          # Run the security scan with Trivy
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL sayyamdev/test-project:latest
           docker push sayyamdev/test-project:latest
+          
           # Deployment
           kubectl apply -f deployment.yml
           
