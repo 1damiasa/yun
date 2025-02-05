@@ -17,15 +17,7 @@ jobs:
     - name: Set up Docker login
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-    - name: Build Docker image
-      run: |
-        # Build the Docker image
-        docker build -t sayyamdev/test-project:latest .
-
-    - name: Push Docker image to Docker Hub
-      run: |
-        # Push the image to Docker Hub
-        docker push sayyamdev/test-project:latest
+       
 
     - name: Set up SSH private key
       run: |
@@ -36,6 +28,9 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
           # Go to the project directory
+          cd /home/ubuntu/test-project
+          docker build -t sayyamdev/test-project:latest .
+          docker push sayyamdev/test-project:latest
           # Deployment
           kubectl apply -f deployment.yml
           
