@@ -6,28 +6,38 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Save SSH Key to a File
-      run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key.pem
-      shell: bash
-
-    - name: Set Permissions for the Private Key
-      run: chmod 600 /tmp/private_key.pem
-      shell: bash
-
-    - name: SSH into VM, Pull Latest Code, Build Docker Image, and Deploy to Kubernetes
+    - name: Set up SSH private key
       run: |
-        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@3.144.232.45 \
-        "cd /home/ubuntu/test-project && \
-         git pull origin main && \
-         docker build -t hello-world-app:latest . && \
-         kubectl set image deployment/hello-world-app hello-world=hello-world-app:latest && \
-         kubectl rollout status deployment/hello-world-app"
-      shell: bash
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key.pem
+        chmod 600 /tmp/private_key.pem
+
+    - name: SSH into VM, Pull latest code, and copy to container
+      run: |
+        ssh -o StrictHostKeyChecking=no -i /tmp/private_key.pem ubuntu@${{ secrets.VM_IP }} << 'EOF'
+          # Go to the project directory
+          cd /home/ubuntu/test-project
+
+          # Pull the latest code from the repository
+          git pull origin main
+
+          # Copy the latest code to the Kubernetes container running the app
+          # Replace 'hello-world-app' with the actual name of your pod/container
+          kubectl cp /home/ubuntu/test-project/python.py hello-world-app:/app/python.py
+          
+          # If there are multiple files to copy, use the following (example)
+          # kubectl cp /home/ubuntu/test-project/. hello-world-app:/app/
+
+          # Trigger a rollout to apply the changes
+          kubectl rollout restart deployment/hello-world-app
+        EOF
+      env:
+        VM_IP: ${{ secrets.VM_IP }}
+
 
