@@ -2,7 +2,7 @@ provider "kubernetes" {
   config_path = "~/.kube/config"  # Path to Minikube's kubeconfig file
 }
 
-resource "kubernetes_deployment" "hello_world" {
+resource "kubernetes_deployment" "sayyamdev/test-project:latest" {
   metadata {
     name = "hello-world-app"
     labels = {
@@ -29,7 +29,7 @@ resource "kubernetes_deployment" "hello_world" {
       spec {
         container {
           name  = "hello-world"
-          image = "hello-world-app:latest"  # Using the locally built Docker image
+          image = "sayyamdev/test-project:latest"  # Using the locally built Docker image
           port {
             container_port = 5000
           }
