@@ -1,0 +1,36 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Copy code to VM
+      run: |
+        scp -i ${{ secrets.VM_SSH_KEY }} -r ./ ubuntu@${{ secrets.VM_IP }}:/home/ubuntu/app
+
+    - name: SSH into VM, Build Docker Image and Deploy to Minikube
+      run: |
+        ssh -i ${{ secrets.VM_SSH_KEY }} ubuntu@${{ secrets.VM_IP }} << 'EOF'
+          # Navigate to the app directory on the VM
+          cd /home/ubuntu/app
+          
+          # Ensure Docker is using Minikube's Docker daemon
+          eval $(minikube -p minikube docker-env)
+          
+          # Build the Docker image on the VM
+          docker build -t hello-world-app:latest .
+          
+          # Deploy the Docker image to Minikube Kubernetes
+          kubectl set image deployment/hello-world-app hello-world=hello-world-app:latest
+          kubectl rollout status deployment/hello-world-app
+        EOF
+
